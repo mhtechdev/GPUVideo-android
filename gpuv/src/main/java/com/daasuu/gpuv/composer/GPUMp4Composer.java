@@ -20,6 +20,7 @@ public class GPUMp4Composer {
     private final static String TAG = GPUMp4Composer.class.getSimpleName();
 
     private Context context;
+    private final Uri srcUri;
     private final String srcPath;
     private final String destPath;
     private GlFilter filter;
@@ -33,19 +34,18 @@ public class GPUMp4Composer {
     private int timeScale = 1;
     private boolean flipVertical = false;
     private boolean flipHorizontal = false;
+    private long startTimeMs = -1;
+    private long endTimeMs = -1;
+    private boolean useAltEncoder = false;
 
     private ExecutorService executorService;
 
 
-    public GPUMp4Composer(final String srcPath, final String destPath) {
+    public GPUMp4Composer(final String srcPath, final Uri srcUri, final String destPath, Context context) {
+        this.srcUri = srcUri;
         this.srcPath = srcPath;
         this.destPath = destPath;
-    }
-
-    public GPUMp4Composer(final Context context, final String srcPath, final String destPath) {
         this.context = context;
-        this.srcPath = srcPath;
-        this.destPath = destPath;
     }
 
     public GPUMp4Composer filter(GlFilter filter) {
@@ -75,6 +75,21 @@ public class GPUMp4Composer {
 
     public GPUMp4Composer flipHorizontal(boolean flipHorizontal) {
         this.flipHorizontal = flipHorizontal;
+        return this;
+    }
+
+    public GPUMp4Composer startTimeMs(long startTimeMs) {
+        this.startTimeMs = startTimeMs;
+        return this;
+    }
+
+    public GPUMp4Composer endTimeMs(long endTimeMs) {
+        this.endTimeMs = endTimeMs;
+        return this;
+    }
+
+    public GPUMp4Composer useAltEncoder(boolean useAltEncoder) {
+        this.useAltEncoder = useAltEncoder;
         return this;
     }
 
@@ -152,7 +167,10 @@ public class GPUMp4Composer {
                 }
 
                 try {
-                    engine.setDataSource(fileInputStream.getFD());
+                    if(fileInputStream != null)
+                        engine.setDataSource(fileInputStream.getFD(), srcUri, context);
+                    else
+                        engine.setDataSource(null, srcUri, context);
                 } catch (IOException e) {
                     e.printStackTrace();
                     if (listener != null) {
@@ -217,7 +235,10 @@ public class GPUMp4Composer {
                             fillModeCustomItem,
                             timeScale,
                             flipVertical,
-                            flipHorizontal
+                            flipHorizontal,
+                            startTimeMs,
+                            endTimeMs,
+                            useAltEncoder
                     );
 
                 } catch (Exception e) {

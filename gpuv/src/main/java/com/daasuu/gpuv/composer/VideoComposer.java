@@ -139,15 +139,23 @@ class VideoComposer {
             encoderSurface.release();
             encoderSurface = null;
         }
-        if (decoder != null) {
-            if (decoderStarted) decoder.stop();
-            decoder.release();
-            decoder = null;
+        try {
+            if (decoder != null) {
+                if (decoderStarted) decoder.stop();
+                decoder.release();
+                decoder = null;
+            }
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
         }
-        if (encoder != null) {
-            if (encoderStarted) encoder.stop();
-            encoder.release();
-            encoder = null;
+        try {
+            if (encoder != null) {
+                if (encoderStarted) encoder.stop();
+                encoder.release();
+                encoder = null;
+            }
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
         }
     }
 
@@ -225,7 +233,8 @@ class VideoComposer {
             isEncoderEOS = true;
             bufferInfo.set(0, 0, 0, bufferInfo.flags);
         }
-        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) {
+        if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
+            || (bufferInfo.presentationTimeUs < 0)) {
             // SPS or PPS, which should be passed by MediaFormat.
             encoder.releaseOutputBuffer(result, false);
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
