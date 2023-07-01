@@ -98,9 +98,10 @@ class GPUMp4ComposerEngine {
             MuxRender muxRender = null;
 
             ArrayList<String> mediaFormats = new ArrayList<>();
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_AVC);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_VP9);
-            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_H263);
 
             boolean success = false;
