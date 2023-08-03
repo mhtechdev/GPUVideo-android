@@ -103,17 +103,27 @@ class GPUMp4ComposerEngine {
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_AVC);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_VP9);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_H263);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_VP8);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_RAW);
 
             boolean success = false;
 
             for (int i = 0; i < mediaFormats.size(); i++) {
                 try {
+                    Log.d(TAG, "****** Trying with format " + mediaFormats.get(i) + "********");
                     MediaFormat videoOutputFormat = MediaFormat.createVideoFormat(mediaFormats.get(i), outputResolution.getWidth(), outputResolution.getHeight());
 
                     videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
                     videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
                     videoOutputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+                    //videoOutputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
+                    videoOutputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
                     videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                    //videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
+                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, inputResolution.getWidth());
+                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, inputResolution.getHeight());
+                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, inputResolution.getHeight() * inputResolution.getWidth());
 
                     muxRender = new MuxRender(mediaMuxer);
 
@@ -162,7 +172,10 @@ class GPUMp4ComposerEngine {
                     mediaMuxer.stop();
 
                     success = true;
+                    Log.d(TAG, "Succeeded with mediaformat " + mediaFormats.get(i));
                 } catch (Exception e) {
+                    e.printStackTrace();
+                    videoComposer.release();
                     success = false;
                 }
                 if(success)
