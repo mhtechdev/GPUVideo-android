@@ -143,13 +143,23 @@ public class GPUMp4Composer {
                     }
                 });
 
-                final File srcFile = new File(srcPath);
+
                 final FileInputStream fileInputStream;
                 try {
                     if (srcPath.contains("content:/")) {
                         fileInputStream = (FileInputStream) context.getContentResolver().openInputStream(Uri.parse(srcPath));
                     } else {
-                        fileInputStream = new FileInputStream(srcFile);
+                        try {
+                            final File srcFile = new File(srcPath);
+                            fileInputStream = new FileInputStream(srcFile);
+                        } catch (NullPointerException e) {
+                            e.printStackTrace();
+                            Log.e(TAG, "Failed to open source file!");
+                            if (listener != null) {
+                                listener.onFailed(e);
+                            }
+                            return;
+                        }
                     }
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
@@ -166,8 +176,9 @@ public class GPUMp4Composer {
                     return;
                 }
 
+
                 try {
-                    if(fileInputStream != null)
+                    if (fileInputStream != null)
                         engine.setDataSource(fileInputStream.getFD(), srcUri, context);
                     else
                         engine.setDataSource(null, srcUri, context);
