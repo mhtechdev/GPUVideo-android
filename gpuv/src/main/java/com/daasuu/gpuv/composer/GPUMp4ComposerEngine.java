@@ -65,12 +65,6 @@ class GPUMp4ComposerEngine {
 
 
         try {
-            mediaExtractor = new MediaExtractor();
-            if (inputFileDescriptor != null)
-                mediaExtractor.setDataSource(inputFileDescriptor);
-            else
-                mediaExtractor.setDataSource(context, srcUri, null);
-            mediaMuxer = new MediaMuxer(destPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             mediaMetadataRetriever = new MediaMetadataRetriever();
             if (inputFileDescriptor != null)
                 mediaMetadataRetriever.setDataSource(inputFileDescriptor);
@@ -95,88 +89,131 @@ class GPUMp4ComposerEngine {
             int videoTrackIndex = 0;
             int audioTrackIndex = 1;
 
-            MuxRender muxRender = null;
-
             ArrayList<String> mediaFormats = new ArrayList<>();
-            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
-            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_AVC);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_HEVC);
+            mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG4);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_VP9);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_H263);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_MPEG2);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_VP8);
             mediaFormats.add(MediaFormat.MIMETYPE_VIDEO_RAW);
 
+            MuxRender muxRender;
+
             boolean success = false;
 
             for (int i = 0; i < mediaFormats.size(); i++) {
-                try {
-                    Log.d(TAG, "****** Trying with format " + mediaFormats.get(i) + "********");
-                    MediaFormat videoOutputFormat = MediaFormat.createVideoFormat(mediaFormats.get(i), outputResolution.getWidth(), outputResolution.getHeight());
+                for(int vidSize = 0; vidSize < 2; vidSize++) {
+                    try {
+                        mediaExtractor = new MediaExtractor();
+                        if (inputFileDescriptor != null)
+                            mediaExtractor.setDataSource(inputFileDescriptor);
+                        else
+                            mediaExtractor.setDataSource(context, srcUri, null);
 
-                    videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-                    videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
-                    videoOutputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-                    //videoOutputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
-                    videoOutputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
-                    videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-                    //videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
-                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, inputResolution.getWidth());
-                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, inputResolution.getHeight());
-                    //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, inputResolution.getHeight() * inputResolution.getWidth());
+                        mediaMuxer = new MediaMuxer(destPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
-                    muxRender = new MuxRender(mediaMuxer);
+                        Log.d(TAG, "****** Trying with format " + mediaFormats.get(i) + "********");
+                        MediaFormat videoOutputFormat = MediaFormat.createVideoFormat(mediaFormats.get(i), outputResolution.getWidth(), outputResolution.getHeight());
 
-                    // identify track indices
-                    MediaFormat format = mediaExtractor.getTrackFormat(0);
-                    String mime = format.getString(MediaFormat.KEY_MIME);
+                        Log.d(TAG, "DIMS: " + inputResolution.getWidth() + " " + inputResolution.getHeight());
 
-                    if (mime.startsWith("video/")) {
-                        videoTrackIndex = 0;
-                        audioTrackIndex = 1;
-                    } else {
-                        videoTrackIndex = 1;
-                        audioTrackIndex = 0;
-                    }
-
-                    // setup video composer
-                    videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
-                    videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
-                    mediaExtractor.selectTrack(videoTrackIndex);
-
-                    // setup audio if present and not muted
-                    if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null && !mute) {
-                        // has Audio video
-
-                        if (timeScale < 2) {
-                            audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
+                        if(vidSize == 0) {
+                            videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, inputResolution.getWidth());
+                            videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, inputResolution.getHeight());
                         } else {
-                            audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
+                            videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, 1920);
+                            int height = 1080;
+                            if(inputResolution.getHeight() > 0 && inputResolution.getWidth() > 0) {
+                                height = (int)((inputResolution.getWidth() / 1920.0) * inputResolution.getHeight());
+                            }
+                            videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, height);//inputResolution.getHeight());
+                        }
+                        videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+                        videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+                        videoOutputFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 30);
+                        videoOutputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+                        //videoOutputFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, 44100);
+                        videoOutputFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
+                        videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+                        //videoOutputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar);
+                        //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_WIDTH, inputResolution.getWidth());
+                        //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_HEIGHT, inputResolution.getHeight());
+                        //videoOutputFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, inputResolution.getHeight() * inputResolution.getWidth());
+
+                        muxRender = new MuxRender(mediaMuxer);
+
+                        // identify track indices
+                        MediaFormat format = mediaExtractor.getTrackFormat(0);
+                        String mime = format.getString(MediaFormat.KEY_MIME);
+
+                        if (mime.startsWith("video/")) {
+                            videoTrackIndex = 0;
+                            audioTrackIndex = 1;
+                        } else {
+                            videoTrackIndex = 1;
+                            audioTrackIndex = 0;
                         }
 
-                        audioComposer.setup();
+                        // setup video composer
+                        videoComposer = new VideoComposer(mediaExtractor, videoTrackIndex, videoOutputFormat, muxRender, timeScale);
+                        videoComposer.setUp(filter, rotation, outputResolution, inputResolution, fillMode, fillModeCustomItem, flipVertical, flipHorizontal);
+                        mediaExtractor.selectTrack(videoTrackIndex);
 
-                        mediaExtractor.selectTrack(audioTrackIndex);
+                        // setup audio if present and not muted
+                        if (mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) != null/* && !mute*/) {
+                            // has Audio video
 
-                        if(startTimeMs > 0)
-                            mediaExtractor.seekTo((startTimeMs * 1000), MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                            if (timeScale < 2) {
+                                audioComposer = new AudioComposer(mediaExtractor, audioTrackIndex, muxRender);
+                            } else {
+                                audioComposer = new RemixAudioComposer(mediaExtractor, audioTrackIndex, mediaExtractor.getTrackFormat(audioTrackIndex), muxRender, timeScale);
+                            }
 
-                        runPipelines();
-                    } else {
-                        // no audio video
-                        if(startTimeMs > 0)
-                            mediaExtractor.seekTo((startTimeMs * 1000), MediaExtractor.SEEK_TO_CLOSEST_SYNC);
-                        runPipelinesNoAudio();
+                            audioComposer.setup();
+
+                            mediaExtractor.selectTrack(audioTrackIndex);
+
+                            if (startTimeMs > 0)
+                                mediaExtractor.seekTo((startTimeMs * 1000), MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+
+                            runPipelines();
+                        } else {
+                            // no audio video
+                            if (startTimeMs > 0)
+                                mediaExtractor.seekTo((startTimeMs * 1000), MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                            runPipelinesNoAudio();
+                        }
+
+                        mediaMuxer.stop();
+
+                        success = true;
+                        Log.d(TAG, "Succeeded with mediaformat " + mediaFormats.get(i));
+                    } catch (Exception e) {
+                        Log.d(TAG, "Failed to init composer with media format " + mediaFormats.get(i));
+                        e.printStackTrace();
+                        try {
+                            if (videoComposer != null) {
+                                videoComposer.release();
+                                videoComposer = null;
+                            }
+                            if (audioComposer != null) {
+                                audioComposer.release();
+                                audioComposer = null;
+                            }
+                            if (mediaExtractor != null) {
+                                mediaExtractor.release();
+                                mediaExtractor = null;
+                            }
+                            Thread.sleep(100);
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
+                        success = false;
                     }
-
-                    mediaMuxer.stop();
-
-                    success = true;
-                    Log.d(TAG, "Succeeded with mediaformat " + mediaFormats.get(i));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    videoComposer.release();
-                    success = false;
+                    if (success)
+                        break;
                 }
                 if(success)
                     break;
@@ -200,7 +237,7 @@ class GPUMp4ComposerEngine {
             } catch (RuntimeException e) {
                 // Too fatal to make alive the app, because it may leak native resources.
                 //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown mediaExtractor, codecs and mediaMuxer pipeline.", e);
+                e.printStackTrace();
             }
             try {
                 if (mediaMuxer != null) {
