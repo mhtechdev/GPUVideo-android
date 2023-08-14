@@ -25,6 +25,7 @@ public class GPUMp4Composer {
     private final String destPath;
     private GlFilter filter;
     private Size outputResolution;
+    private Size inputResolution;
     private int bitrate = -1;
     private boolean mute = false;
     private Rotation rotation = Rotation.NORMAL;
@@ -120,6 +121,11 @@ public class GPUMp4Composer {
         return this;
     }
 
+    public GPUMp4Composer inputSize(int width, int height) {
+        inputResolution = new Size(width, height);
+        return this;
+    }
+
     private ExecutorService getExecutorService() {
         if (executorService == null) {
             executorService = Executors.newSingleThreadExecutor();
@@ -191,7 +197,10 @@ public class GPUMp4Composer {
                 }
 
                 final int videoRotate = getVideoRotation(srcPath);
-                final Size srcVideoResolution = getVideoResolution(srcPath, videoRotate);
+                Size srcVideoResolution = getVideoResolution(srcPath, videoRotate);
+                if(srcVideoResolution == null) {
+                    srcVideoResolution = inputResolution;
+                }
 
                 if (filter == null) {
                     filter = new GlFilter();
@@ -333,13 +342,16 @@ public class GPUMp4Composer {
 
     private Size getVideoResolution(final String path, final int rotation) {
         MediaMetadataRetriever retriever = null;
+        Size size = null;
         try {
             retriever = new MediaMetadataRetriever();
             retriever.setDataSource(path);
             int width = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
             int height = Integer.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
-            return new Size(width, height);
+            size = new Size(width, height);
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
             try {
                 if (retriever != null) {
@@ -349,6 +361,7 @@ public class GPUMp4Composer {
                 Log.e(TAG, "Failed to release mediaMetadataRetriever.", e);
             }
         }
+        return size;
     }
 
 }
