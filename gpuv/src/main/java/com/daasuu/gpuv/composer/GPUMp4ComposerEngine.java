@@ -63,6 +63,7 @@ class GPUMp4ComposerEngine {
             final boolean useAltEncoder
     ) throws IOException {
 
+        Log.d(TAG, "COMPOSE: " + inputResolution + " " + outputResolution + " " + rotation);
 
         try {
             mediaMetadataRetriever = new MediaMetadataRetriever();
@@ -117,19 +118,28 @@ class GPUMp4ComposerEngine {
                         Log.d(TAG, "****** Trying with format " + mediaFormats.get(i) + "********");
                         MediaFormat videoOutputFormat = MediaFormat.createVideoFormat(mediaFormats.get(i), outputResolution.getWidth(), outputResolution.getHeight());
 
-                        Log.d(TAG, "DIMS: " + inputResolution.getWidth() + " " + inputResolution.getHeight());
+                        Log.d(TAG, "DIMS: " + outputResolution.getWidth() + " " + outputResolution.getHeight());
 
-                        if(vidSize == 0) {
-                            videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, inputResolution.getWidth());
-                            videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, inputResolution.getHeight());
+                        /*if(vidSize == 0) {
+                            videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, outputResolution.getWidth());
+                            videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, outputResolution.getHeight());
                         } else {
-                            videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, 1920);
-                            int height = 1080;
-                            if(inputResolution.getHeight() > 0 && inputResolution.getWidth() > 0) {
-                                height = (int)((inputResolution.getWidth() / 1920.0) * inputResolution.getHeight());
+                            if(outputResolution.getWidth() > outputResolution.getHeight()) {
+                                videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, 1920);
+                                int height = 1080;
+                                if (outputResolution.getHeight() > 0 && outputResolution.getWidth() > 0) {
+                                    height = (int) ((outputResolution.getWidth() / 1920.0) * outputResolution.getHeight());
+                                }
+                                videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, height);//inputResolution.getHeight());
+                            } else {
+                                videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, 1920);
+                                int width = 1080;
+                                if (outputResolution.getWidth() > 0 && outputResolution.getHeight() > 0) {
+                                    width = (int) ((outputResolution.getHeight() / 1920.0) * outputResolution.getWidth());
+                                }
+                                videoOutputFormat.setInteger(MediaFormat.KEY_WIDTH, width);//inputResolution.getHeight());
                             }
-                            videoOutputFormat.setInteger(MediaFormat.KEY_HEIGHT, height);//inputResolution.getHeight());
-                        }
+                        }*/
                         videoOutputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
                         videoOutputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
                         videoOutputFormat.setInteger(MediaFormat.KEY_CAPTURE_RATE, 30);

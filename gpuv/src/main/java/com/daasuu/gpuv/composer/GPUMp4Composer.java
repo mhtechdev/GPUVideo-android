@@ -122,6 +122,7 @@ public class GPUMp4Composer {
     }
 
     public GPUMp4Composer inputSize(int width, int height) {
+        Log.d(TAG, "Setting input size to " + width + "x" + height);
         inputResolution = new Size(width, height);
         return this;
     }
@@ -213,7 +214,7 @@ public class GPUMp4Composer {
                 if (fillModeCustomItem != null) {
                     fillMode = FillMode.CUSTOM;
                 }
-
+                //outputResolution = srcVideoResolution;
                 if (outputResolution == null) {
                     if (fillMode == FillMode.CUSTOM) {
                         outputResolution = srcVideoResolution;
@@ -233,6 +234,11 @@ public class GPUMp4Composer {
                 if (timeScale < 2) {
                     timeScale = 1;
                 }
+
+                /*if(rotation == Rotation.ROTATION_90 || rotation.getRotation() == Rotation.ROTATION_270.getRotation()) {
+                    srcVideoResolution = new Size(srcVideoResolution.getHeight(), srcVideoResolution.getWidth());
+                    outputResolution = new Size(outputResolution.getHeight(), outputResolution.getWidth());
+                }*/
 
                 Log.d(TAG, "rotation = " + (rotation.getRotation() + videoRotate));
                 Log.d(TAG, "inputResolution width = " + srcVideoResolution.getWidth() + " height = " + srcVideoResolution.getHeight());
